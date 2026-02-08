@@ -1,9 +1,0 @@
-POST http://localhost:8080/tasks
-X-API-KEY: secret123
-Content-Type: application/json
-
-{
-    "title": "Walk it",
-    "description": "Like I talk it"
-}
-
