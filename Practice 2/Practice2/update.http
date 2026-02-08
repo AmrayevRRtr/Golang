@@ -1,0 +1,7 @@
+PATCH http://localhost:8080/tasks?id=1
+X-API-KEY: secret123
+Content-Type: application/json
+
+{
+  "completed": true 
+}
