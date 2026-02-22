@@ -1,0 +1,9 @@
+PUT http://localhost:8080/users/2
+X-API-KEY: secret123
+Content-Type: application/json
+
+{
+  "name": "Ruslan Amrayev",
+  "email": "ruslan123@example.com",
+  "age": 23
+}

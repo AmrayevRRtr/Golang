@@ -1,0 +1,9 @@
+POST http://localhost:8080/users
+X-API-KEY: secret123
+Content-Type: application/json
+
+{
+  "name": "Ruslan",
+  "email": "ruslan@example.com",
+  "age": 20
+}
