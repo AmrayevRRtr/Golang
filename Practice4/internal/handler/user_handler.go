@@ -20,9 +20,29 @@ func NewUserHandler(u *usecase.UserUsecase) *UserHandler {
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/users", h.users)
 	mux.HandleFunc("/users/", h.userByID)
-	mux.HandleFunc("/health", h.health)
 }
 
+// GetUsers godoc
+// @Summary Get list of users
+// @Description Get users with pagination
+// @Tags users
+// @Param limit query int false "Limit"
+// @Param offset query int false "Offset"
+// @Success 200 {array} modules.User
+// @Failure 500 {object} map[string]string
+// @Router /users [get]
+//
+// CreateUser godoc
+// @Summary Create user
+// @Description Create a new user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body modules.User true "User"
+// @Success 200 {object} map[string]int64
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users [post]
 func (h *UserHandler) users(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
@@ -61,7 +81,7 @@ func (h *UserHandler) users(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		id, err := h.usecase.CreateUser(&user)
+		id, err := h.usecase.CreateUserWithAudit(&user)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -75,10 +95,23 @@ func (h *UserHandler) users(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetUserByID godoc
+// @Summary Get user by ID
+// @Description Get user by ID
+// @Tags users
+// @Param id path int true "User ID"
+// @Success 200 {object} modules.User
+// @Failure 404 {object} map[string]string
+// @Router /users/{id} [get]
 func (h *UserHandler) userByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
-	id, _ := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid user id"})
+		return
+	}
 	switch r.Method {
 	case "GET":
 		user, err := h.usecase.GetUserByID(id)
@@ -90,7 +123,11 @@ func (h *UserHandler) userByID(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(user)
 	case "PUT", "PATCH":
 		var user modules.User
-		json.NewDecoder(r.Body).Decode(&user)
+		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid request body"})
+			return
+		}
 		user.ID = id
 		err := h.usecase.UpdateUser(&user)
 		if err != nil {
@@ -109,9 +146,11 @@ func (h *UserHandler) userByID(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
 	}
 }
 
-func (h *UserHandler) health(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Health(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }

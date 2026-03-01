@@ -9,15 +9,11 @@ type UserRepository interface {
 	UpdateUser(user *modules.User) error
 	DeleteUser(id int) error
 	CreateUserWithAudit(user *modules.User) (int64, error)
+	GetUserByEmail(email string) (*modules.User, error)
 }
 
 type Repositories struct {
 	UserRepository
-}
-
-func (*Repositories) CreateUserWithAudit(user *modules.User) (int64, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func NewRepositories(userRepo UserRepository) *Repositories {

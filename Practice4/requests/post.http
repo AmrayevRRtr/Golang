@@ -3,7 +3,8 @@ X-API-KEY: secret123
 Content-Type: application/json
 
 {
-  "name": "Ruslan",
-  "email": "ruslan@example.com",
-  "age": 20
+  "name": "Diogo",
+  "email": "diogo@example.com",
+  "password": "diogo20",
+  "age": 29
 }

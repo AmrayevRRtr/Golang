@@ -5,16 +5,21 @@ import (
 	"Practice4/internal/middleware"
 	"Practice4/internal/repository"
 	"Practice4/internal/repository/mysql"
+	"Practice4/internal/repository/mysql/users"
 	"Practice4/internal/usecase"
 	"Practice4/pkg/modules"
 	"context"
+	"os/signal"
+	"syscall"
+
+	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 func Run() {
@@ -38,16 +43,50 @@ func Run() {
 
 	ctx := context.Background()
 	db := mysql.NewMySQLDialect(ctx, cfg)
-	mysqlRepo := mysql.NewUserRepository(db)
+	mysqlRepo := users.NewUserRepository(db)
 	repositories := repository.NewRepositories(mysqlRepo)
 	uc := usecase.NewUserUsecase(repositories.UserRepository)
 	h := handler.NewUserHandler(uc)
 
-	mux := http.NewServeMux()
-	h.RegisterRoutes(mux)
+	mainMux := http.NewServeMux()
+	protectedMux := http.NewServeMux()
 
-	log.Println("Server started at :8080")
+	mainMux.Handle("/swagger/", httpSwagger.WrapHandler)
+	mainMux.HandleFunc("/health", h.Health)
 
-	log.Fatal(http.ListenAndServe(":8080", middleware.Logging(middleware.Auth(mux))))
+	h.RegisterRoutes(protectedMux)
 
+	mainMux.Handle("/users", middleware.Auth(protectedMux))
+	mainMux.Handle("/users/", middleware.Auth(protectedMux))
+
+	server := &http.Server{
+		Addr:    ":" + os.Getenv("SERVER_PORT"),
+		Handler: middleware.Logging(mainMux),
+	}
+
+	go func() {
+		log.Println("Server started at :" + os.Getenv("SERVER_PORT"))
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	log.Println("Shutting down gracefully...")
+
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctxTimeout); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	if err := db.DB.Close(); err != nil {
+		log.Println("Error closing database:", err)
+	}
+
+	log.Println("Server exited properly")
 }

@@ -1,4 +1,7 @@
-PUT http://localhost:8080/users/7
+PATCH http://localhost:8080/users/2
 X-API-KEY: secret123
 Content-Type: application/json
 
+{
+  "age": 31
+}

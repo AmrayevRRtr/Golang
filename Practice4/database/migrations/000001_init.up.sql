@@ -8,3 +8,14 @@ CREATE TABLE IF NOT EXISTS users (
 
 INSERT INTO users (name, email, age)
 VALUES ('John Doe', 'john@example.com', 25);
+
+ALTER TABLE users
+    ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL;
+
+CREATE TABLE audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE users ADD COLUMN password VARCHAR(255) NOT NULL DEFAULT 'temporary_password';
