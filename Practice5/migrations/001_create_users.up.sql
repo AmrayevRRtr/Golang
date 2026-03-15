@@ -1,0 +1,13 @@
+CREATE DATABASE users_db;
+USE users_db;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    gender VARCHAR(10),
+    birth_date DATE
+);
+
+ALTER TABLE users
+ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL;
