@@ -1,3 +1,4 @@
+USE mydb;
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -6,8 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO users (name, email, age)
-VALUES ('John Doe', 'john@example.com', 25);
 
 ALTER TABLE users
     ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL;

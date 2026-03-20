@@ -5,8 +5,12 @@ import (
 	"Practice4/internal/usecase"
 	"encoding/json"
 	"net/http"
+)
 
-	"golang.org/x/crypto/bcrypt"
+const (
+	AdminEmail    = "admin@mail.com"
+	AdminPassword = "password123"
+	AdminID       = 22
 )
 
 type AuthHandler struct {
@@ -24,27 +28,23 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	json.NewDecoder(r.Body).Decode(&req)
-
-	user, err := h.usecase.GetUserByEmail(req.Email)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+	if req.Email != AdminEmail || req.Password != AdminPassword {
+		http.Error(w, "invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
-	token, err := auth.GenerateToken(user.ID, user.Email, "user")
+	token, err := auth.GenerateToken(AdminID, AdminEmail, "admin")
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "could not generate token", http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"token": token,
 	})

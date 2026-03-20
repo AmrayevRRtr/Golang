@@ -46,22 +46,26 @@ func Run() {
 	mysqlRepo := users.NewUserRepository(db)
 	repositories := repository.NewRepositories(mysqlRepo)
 	uc := usecase.NewUserUsecase(repositories.UserRepository)
-	h := handler.NewUserHandler(uc)
+	userHandler := handler.NewUserHandler(uc)
+	authHandler := handler.NewAuthHandler(uc)
 
 	mainMux := http.NewServeMux()
 	protectedMux := http.NewServeMux()
 
 	mainMux.Handle("/swagger/", httpSwagger.WrapHandler)
-	mainMux.HandleFunc("/health", h.Health)
+	mainMux.HandleFunc("/health", userHandler.Health)
+	mainMux.HandleFunc("/login", authHandler.Login)
 
-	h.RegisterRoutes(protectedMux)
+	userHandler.RegisterRoutes(protectedMux)
 
-	mainMux.Handle("/users", middleware.Auth(protectedMux))
-	mainMux.Handle("/users/", middleware.Auth(protectedMux))
+	protectedHandler := middleware.Auth(protectedMux)
+
+	mainMux.Handle("/users/", protectedHandler)
+	mainMux.Handle("/users", protectedHandler)
 
 	server := &http.Server{
 		Addr:    ":" + os.Getenv("SERVER_PORT"),
-		Handler: middleware.Logging(mainMux),
+		Handler: mainMux,
 	}
 
 	go func() {
