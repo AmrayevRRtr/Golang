@@ -84,7 +84,7 @@ func (r *Repository) UpdateUser(user *models.User) error {
 	}
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
-		return fmt.Errorf("user with id %d not found", user.ID) // ИСПРАВЛЕНО: теперь возвращает ошибку
+		return fmt.Errorf("user with id %d not found", user.ID)
 	}
 	return nil
 }
@@ -161,7 +161,9 @@ func (r *Repository) queryRowsWithFilter(ctx context.Context, query string, filt
 	if limit == 0 {
 		limit = 10
 	}
-	filterValues = append(filterValues, limit)
+	query += " OFFSET ?"
+
+	filterValues = append(filterValues, limit, filter.Offset)
 
 	return r.db.QueryContext(ctx, query, filterValues...)
 }
@@ -181,7 +183,6 @@ func (r *Repository) ListByFilter(ctx context.Context, filter *models.UserFilter
 	var arr []*models.User
 	for rows.Next() {
 		u := new(models.User)
-		// Теперь тут 6 колонок и 6 аргументов
 		err := rows.Scan(
 			&u.ID,
 			&u.Name,

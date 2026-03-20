@@ -2,7 +2,7 @@ CREATE DATABASE users_db;
 USE users_db;
 
 CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id CHAR(40) PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     email VARCHAR(50) UNIQUE NOT NULL,
     gender VARCHAR(10),

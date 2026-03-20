@@ -1,18 +1,29 @@
 package models
 
 import (
-	"time"
-
+	"github.com/google/uuid"
+	_ "github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
+	"gorm.io/gorm"
+	_ "gorm.io/gorm"
+	"time"
 )
 
 type User struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Gender    string    `json:"gender"`
+	ID        string    `json:"id" gorm:"type:uuid;primaryKey"`
+	Name      string    `json:"name" gorm:"type:varchar(50);not null"`
+	Email     string    `json:"email" gorm:"type:varchar(100);uniqueIndex;not null"`
+	Gender    string    `json:"gender" gorm:"type:varchar(10)"`
 	BirthDate time.Time `json:"birth_date"`
-	DeletedAt null.Time `json:"deleted_at"`
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `json:"deleted_at"`
+}
+
+func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
+	user.ID = uuid.NewString()
+	return
 }
 
 type UserFilter struct {
